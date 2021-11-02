@@ -9,20 +9,7 @@ from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from ibm_watson.natural_language_understanding_v1 import Features, EntitiesOptions, KeywordsOptions
 import base64
 
-# Watson credentials
-
-authenticator = IAMAuthenticator('lGIOi1GFGbCXiE2DOBNJ1DYP2Y1SSLk9urAqTpy-IUd9')
-natural_language_understanding = NaturalLanguageUnderstandingV1(
-	version='2021-03-25',
-	authenticator=authenticator)
-
-natural_language_understanding.set_service_url('https://api.eu-gb.natural-language-understanding.watson.cloud.ibm.com/instances/99fba91f-2f7c-4c9a-a04b-7f25e1cd239b')
-
-st.title("Welcome to WatSERP!")
-
-keyword = st.text_input("Enter keyword").lower()
-
-submit = st.button('Submit')
+# Dictionaries
 
 serp = {
 	'urls': [],
@@ -45,11 +32,36 @@ cats_ent = {
 	"Entity Relevance": []
 }
 
+# Header content
+
+st.title("Welcome to WatSERP!")
+
+ibm_api_key = st.text_input("Enter API key for IBM Watson")
+
+serpstack_api_key = st.text_input("Enter API key for Serpstack")
+
+keyword = st.text_input("Enter keyword").lower()
+
+submit = st.button('Submit')
+
+# Watson credentials
+
+authenticator = IAMAuthenticator(ibm_api_key)
+natural_language_understanding = NaturalLanguageUnderstandingV1(
+	version='2021-03-25',
+	authenticator=authenticator)
+
+natural_language_understanding.set_service_url('https://api.eu-gb.natural-language-understanding.watson.cloud.ibm.com/instances/99fba91f-2f7c-4c9a-a04b-7f25e1cd239b')
+
+# Serpstack parameters
+
 params = {
-			'access_key': 'f5c3c4da7cd3778a11eafffd953001cb',
+			'access_key': serpstack_api_key,
 			'query': keyword,
 			'gl': 'uk'
 }
+
+# Main code for script
 
 if submit:
 
@@ -98,14 +110,8 @@ if submit:
 				entities=EntitiesOptions(emotion=True, sentiment=True, limit=50),
 				keywords=KeywordsOptions(emotion=True, sentiment=True,
 										 limit=50))).get_result()
-		except TypeError as e:
-			st.error(f"Type error found! {e} Continuing...")
-			continue
-		except SSLError as e:
-			st.error(f"SSL error found! {e} Continuing...")
-			continue
-		except ApiException as e:
-			st.error(f"API error found! {e} Continuing...")
+		except (TypeError, SSLError, ApiException) as e:
+			st.error(f"Error found! {e} Continuing...")
 			continue
 
 		for kw in range(0,len(response["keywords"])):
